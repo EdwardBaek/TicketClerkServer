@@ -1,7 +1,7 @@
-# Tecket Clerk
+# Ticket Clerk
 
 ## About
-The Server for Project [Ticket Clerk]()
+The Server for Project [Ticket Clerk](https://github.com/EdwardBaek/TicketClerkClientReactNative)
 
 
 
