@@ -1,14 +1,14 @@
 const router = require('express').Router();
 const transfer = require('../module/transfer');
 
-router.route('/new').post( transfer.issueNewTransfer );
-router.route('/detail/:id').get( transfer.getTransferDetail );
+router.route('/').get( transfer.getTransferList );
+router.route('/').post( transfer.issueNewTransfer );
+router.route('/').delete( transfer.deleteTransferList );
 
-router.route('/list').get( transfer.getTransferList );
-router.route('/list').delete( transfer.deleteTransferList );
+router.route('/:id').get( transfer.getTransferDetail );
 
 router.route('/apply').put( transfer.TransferApply );
 router.route('/approval').put( transfer.TransferApproval );
-// router.route('/ticket/transfer/receive').get( transfer.TransferReceive );
+// router.route('/receive').get( transfer.TransferReceive );
 
 module.exports = router;

@@ -5,6 +5,6 @@ const transfer = require('./transfer');
 
 router.use('/users', user);
 router.use('/tickets', ticket);
-router.use('/ticket/transfer', transfer);
+router.use('/transfer', transfer);
 
 module.exports = router;

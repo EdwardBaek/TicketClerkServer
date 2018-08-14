@@ -101,8 +101,7 @@ async function TransferApply (req, res) {
       WITH t as (
         UPDATE t_transfer_ticket
           SET 
-              idTo = $2,
-              transferTime = now()
+              idTo = $2
         WHERE id = $1 
           AND allowance IS NULL
         RETURNING *
