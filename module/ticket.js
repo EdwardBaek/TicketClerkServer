@@ -24,7 +24,7 @@ async function issueNewTicket (req, res) {
 }
 async function deleteTicket (req, res) {
   try {
-    const ticketId = Number(req.body.ticketId);
+    const ticketId = Number(req.params.ticketId);
     const client = await pool.connect();
     const result = await client.query(`
     WITH newTicket AS (
@@ -86,7 +86,7 @@ async function getTicketListByUser (req, res) {
 }
 async function getTicketDetail (req, res) {
   try {
-    const id = Number(req.params.id);
+    const id = Number(req.params.ticketId);
     const client = await pool.connect();
     const result = await client.query( `
     SELECT tt.id as ticketId, tt.ownerid, tu.name as userName, tt.issueTime

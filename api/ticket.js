@@ -1,16 +1,15 @@
 const router = require('express').Router();
 const ticket = require('../module/ticket');
 
-// TODO: /ticket/new -> /ticket
-router.route('/new').post( ticket.issueNewTicket );
-router.route('/').delete( ticket.deleteTicket );
+router.route('/')
+  .post( ticket.issueNewTicket )
+  .get( ticket.getTicketList )
+  .delete( ticket.deleteTicketList );
 
-router.route('/list').get( ticket.getTicketList );
-router.route('/list').delete( ticket.deleteTicketList );
+router.route('/:ticketId')
+  .get( ticket.getTicketDetail )
+  .delete( ticket.deleteTicket );
 
-// TODO: /ticket/list/:userId -> /ticket/list/user/:userId
-router.route('/list/:userId').get( ticket.getTicketListByUser );
-
-router.route('/detail/:id').get( ticket.getTicketDetail );
+router.route('/user/:userId').get( ticket.getTicketListByUser );
 
 module.exports = router;
