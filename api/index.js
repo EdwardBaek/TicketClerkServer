@@ -1,9 +1,9 @@
 const router = require('express').Router();
-const user = require('../module/user');
+const user = require('./user');
 const ticket = require('../module/ticket');
 const transfer = require('../module/transfer');
 
-router.route('/user/list').get( user.getUserList );
+router.use('/users', user);
 
 // TODO: /ticket/new -> /ticket
 router.route('/ticket/new').post( ticket.issueNewTicket );
