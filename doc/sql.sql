@@ -1,11 +1,22 @@
 -- User Table
 CREATE TABLE t_user (
   id SERIAL PRIMARY KEY,
-  name varchar(50)
+  name VARCHAR(50)
 );
 INSERT INTO t_user(name) VALUES('EDWARD');
 INSERT INTO t_user(name) VALUES('YOYO');
 INSERT INTO t_user(name) VALUES('DORIS');
+
+-- Updated 
+CREATE TABLE t_user (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(50),
+  password VARCHAR(20) NOT NULL
+);
+INSERT INTO t_user(name, password) VALUES('EDWARD', 'password');
+INSERT INTO t_user(name, password) VALUES('YOYO', 'password');
+INSERT INTO t_user(name, password) VALUES('DORIS', 'password');
+--
 
 CREATE TABLE t_ticket (
   id SERIAL PRIMARY KEY,
@@ -162,3 +173,17 @@ WITH t as (
   RETURNING *
 )
 SELECT * FROM t
+
+
+-- ADD column
+-- ALTER TABLE t_table ADD column_name type;
+
+-- Delete column
+-- ALTER TABLE t-table DROP column_name
+
+-- ADD DEFAULT value
+-- ALTER TABLE t_table_name ALTER COLUMN column_name SET DEFAULT nextvalu('books_idx');
+
+-- Delete DEFAULT value
+-- ALTER TABLE t_table ALTER column DROP DEFAULT;
+
