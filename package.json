@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_PATH=src node index.js",
-    "test": "NODE_PATH=src node test.js"
+    "test": "NODE_PATH=src node ./node_modules/mocha/bin/mocha --require babel-register --exclude ./node_modules/**/*.spec.js --recursive ./**/*.spec.js --watch"
   },
   "dependencies": {
     "body-parser": "^1.18.3",
