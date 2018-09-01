@@ -1,0 +1,1 @@
+sudo psql -U postgres -h localhost -d test -a -f ./update.sql
