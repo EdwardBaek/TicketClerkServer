@@ -3,18 +3,20 @@ import { expect } from 'chai';
 
 import app from './index';
 
+const endFn = function endFn (err, res, done, callback) {
+  if (err) {
+    done(err);
+    return;
+  }
+  if (typeof callback === 'function') {
+    callback();
+  }
+  done();
+};
+
 describe('Url Error Handle', () => {
   let wrongUrl;
-  const endFn = function endFn (err, res, done, callback) {
-    if (err) {
-      done(err);
-      return;
-    }
-    if (typeof callback === 'function') {
-      callback();
-    }
-    done();
-  };
+  
   
   beforeEach( ()=> {
     wrongUrl = '/so-wrong-url';
@@ -37,5 +39,35 @@ describe('Url Error Handle', () => {
         }))
     });
 
+  });
+});
+
+describe('API TEST', () => {
+  describe('/api/users/', () => {
+    const url = '/api/users/';
+    it('#GET should respond with 200', (done) => {
+      request(app)
+        .get(url)
+        .expect(200)
+        .end(done);
+    });
+
+    it('#GET should respond with correct return values', (done) => {
+      request(app)
+        .get(url)
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            done(err); return;
+          }
+          const row = res.body.result.rows[0];
+          expect(row).to.have.all.keys('id', 'name', 'password');
+          expect(row).has.property('id').with.a('number');
+          expect(row).has.property('name').with.a('string');
+          expect(row).has.property('password').with.a('string');
+
+          done();
+        });
+    });
   });
 });
