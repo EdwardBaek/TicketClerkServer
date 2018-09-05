@@ -13,3 +13,6 @@ docker-compose.yml
 
 # Logs
 *.log
+
+# node package
+package-lock.json
