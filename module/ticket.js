@@ -1,11 +1,11 @@
 const pool = require('./db');
 
 async function issueNewTicket (req, res) {
+  const userId = Number(req.body.userId);
+  if( isNaN(userId) ) return res.status(400).send("Error wrong parameter");
+  
+  const client = await pool.connect();
   try {
-    const userId = Number(req.body.userId);
-    if( isNaN(userId) ) return res.status(400).send("Error wrong parameter");
-
-    const client = await pool.connect();
     const userInfo = await client.query(`SELECT * FROM t_user WHERE id = $1`, [userId]);
 
     if( userInfo.rowCount === 0 ) {
@@ -23,7 +23,6 @@ async function issueNewTicket (req, res) {
       FROM newTicket as tnt, t_user as tu
      WHERE tnt.owner_id = tu.id;
     `, [userId]);
-    client.release();
 
     if( result.rowCount === 0 ) return res.status(404).end('Error wrong user');
     
@@ -32,16 +31,19 @@ async function issueNewTicket (req, res) {
       rowCount: result.rowCount
     })
   } catch (err) {
-    // console.error(err);
+    console.error(err);
     res.status(500).end("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function deleteTicket (req, res) {
+  const ticketId = Number(req.params.ticketId);
+  if( isNaN(ticketId) ) return res.status(400).send("Error wrong parameter");
+  
+  const client = await pool.connect();
   try {
-    const ticketId = Number(req.params.ticketId);
-    if( isNaN(ticketId) ) return res.status(400).send("Error wrong parameter");
 
-    const client = await pool.connect();
     const result = await client.query(`
     WITH newTicket AS (
       DELETE FROM t_ticket WHERE id=$1 RETURNING *
@@ -53,19 +55,20 @@ async function deleteTicket (req, res) {
       FROM newTicket as tnt, t_user as tu
      WHERE tnt.owner_id = tu.id;
     `, [ticketId]);
-    client.release();
     return res.status(200).json({
       rows:result.rows,
       rowCount: result.rowCount
     })
   } catch (err) {
     console.error(err);
-    res.send("Error " + err);
+    res.status(500).send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function getTicketList (req, res) {
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
     const result = await client.query( `
     SELECT tt.id as "ticketId", 
            tt.owner_id as "ownerId", 
@@ -75,20 +78,21 @@ async function getTicketList (req, res) {
       LEFT OUTER JOIN t_user as tu
       ON tu.id = tt.owner_id;
     `);
-    client.release();
     return res.status(200).json({
       rows:result.rows,
       rowCount: result.rowCount
     })
   } catch (err) {
     console.error(err);
-    res.send("Error " + err);
+    res.status(500).send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function getTicketListByUser (req, res) {
+  const client = await pool.connect();
   try {
     let userId = Number(req.params.userId);
-    const client = await pool.connect();
     const result = await client.query( `
     SELECT tt.id as ticketId, 
            tt.owner_id, 
@@ -99,22 +103,24 @@ async function getTicketListByUser (req, res) {
       ON tu.id = tt.owner_id
      WHERE tu.id = $1;
     `, [userId]);
-    client.release();
     return res.status(200).json({
       rows:result.rows,
       rowCount: result.rowCount
     })
   } catch (err) {
     console.error('getTicketListByUser', err);
-    res.send("Error " + err);
+    res.status(500).send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function getTicketDetail (req, res) {
+  const id = Number(req.params.ticketId);
+  if( isNaN(id) ) return res.status(400).send("Error wrong parameter");
+  
+  const client = await pool.connect();
   try {
-    const id = Number(req.params.ticketId);
-    if( isNaN(id) ) return res.status(400).send("Error wrong parameter");
 
-    const client = await pool.connect();
     const result = await client.query( `
     SELECT tt.id as "ticketId", 
            tt.owner_id "ownerId", 
@@ -125,7 +131,6 @@ async function getTicketDetail (req, res) {
       ON tu.id = tt.owner_id
       WHERE tt.id = $1;
     `, [id]);
-    client.release();
 
     if (result.rowCount === 0 ) return res.status(404).end('Error No Ticket Data');
     
@@ -135,16 +140,17 @@ async function getTicketDetail (req, res) {
     })
   } catch (err) {
     console.error('getTicketDetail', err);
-    res.send("Error " + err);
+    res.status(500).send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function deleteTicketList (req, res) {
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
     const result = await client.query(`
       DELETE FROM t_ticket;
     `);
-    client.release();
     return res.status(200).json({
       rows:result.rows,
       rowCount: result.rowCount
@@ -152,6 +158,8 @@ async function deleteTicketList (req, res) {
   } catch (err) {
     console.error('deleteTicketList', err);
     res.send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 

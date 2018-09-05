@@ -1,11 +1,11 @@
 const pool = require('./db');
 async function issueNewTransfer (req, res) {
+  const userId = Number(req.body.userId);
+  const ticketId = Number(req.body.ticketId);
+  if ( isNaN(userId) || isNaN(ticketId) ) return res.status(400).send('Error invalid parameter');
+  
+  const client = await pool.connect();
   try {
-    const userId = Number(req.body.userId);
-    const ticketId = Number(req.body.ticketId);
-    if ( isNaN(userId) || isNaN(ticketId) ) return res.status(400).send('Error invalid parameter');
-
-    const client = await pool.connect();
     const ticketUserInfo = await client.query(`
       SELECT 
         EXISTS( SELECT id FROM t_user WHERE id = $1 ) as "validId", 
@@ -13,10 +13,7 @@ async function issueNewTransfer (req, res) {
     `, [userId, ticketId]);
 
     const {validId, validTicketId} =  ticketUserInfo.rows[0];
-    if (!validId || !validTicketId) {
-      client.release();
-      return res.status(404).send('Error invalid user id or ticket id');
-    }
+    if (!validId || !validTicketId) return res.status(404).send('Error invalid user id or ticket id');
     
     const result = await client.query( `
     WITH newT as (
@@ -34,7 +31,6 @@ async function issueNewTransfer (req, res) {
            transfer_time as "transferTime"
       FROM newT;
     `, [ticketId, userId]);
-    client.release();
 
     if (result.rowCount === 0) return res.status(404).end('Error Invalid parameter value');
 
@@ -43,13 +39,15 @@ async function issueNewTransfer (req, res) {
       rowCount: result.rowCount
     })
   } catch (err) {
-    // console.error('issueNewTransfer', err);
+    console.error('issueNewTransfer', err);
     res.status(500).send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function getTransferList (req, res) {
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
     const result = await client.query( `
     WITH tu as (
       SELECT * FROM t_user
@@ -65,7 +63,6 @@ async function getTransferList (req, res) {
            ttt.transfer_time as "transferTime"
      FROM t_transfer_ticket as ttt;
     `);
-    client.release();
 
     return res.status(200).json({
       rows:result.rows,
@@ -73,16 +70,17 @@ async function getTransferList (req, res) {
     })
   } catch (err) {
     console.error('getTransferList', err);
-    res.send("Error " + err);
+    res.status(500).send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function deleteTransferList (req, res) {
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
     const result = await client.query(`
       DELETE FROM t_transfer_ticket;
     `);
-    client.release();
 
     return res.status(200).json({
       rows:result.rows,
@@ -90,16 +88,18 @@ async function deleteTransferList (req, res) {
     })
   } catch (err) {
     console.error(err);
-    res.send("Error " + err);
+    res.status(500).send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function getTransferDetail (req, res) {
+  let id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).send('Error invalid type parameter');
+  
+  const client = await pool.connect();
   try {
-    let id = Number(req.params.id);
-
-    if (isNaN(id)) return res.status(400).send('Error invalid type parameter');
     
-    const client = await pool.connect();
     const result = await client.query( `
     WITH tu as (
       SELECT * FROM t_user
@@ -116,7 +116,6 @@ async function getTransferDetail (req, res) {
      FROM t_transfer_ticket as ttt
      WHERE ttt.id = $1;
     `, [id]);
-    client.release();
 
     if (result.rowCount === 0 ) return res.status(404).send('Error invalid transfer id');
 
@@ -125,18 +124,20 @@ async function getTransferDetail (req, res) {
       rowCount: result.rowCount
     })
   } catch (err) {
-    // console.error(err);
+    console.error(err);
     res.status(500).send("Error " + err);
+  } finally {
+    client.release();
   }
 }
 async function TransferApply (req, res) {
+  const transferId = Number(req.body.transferId);
+  const toUserId = Number(req.body.toUserId);
+  if (isNaN(transferId) || isNaN(toUserId)) return res.status(400).end('Error invalid parameter');
+  
+  const client = await pool.connect();
   try {
-    const transferId = Number(req.body.transferId);
-    const toUserId = Number(req.body.toUserId);
 
-    if (isNaN(transferId) || isNaN(toUserId)) return res.status(400).end('Error invalid parameter');
-
-    const client = await pool.connect();
     const checkInfo = await client.query(`
       WITH ttt AS (
         SELECT * FROM t_transfer_ticket WHERE id = $1
@@ -152,18 +153,9 @@ async function TransferApply (req, res) {
         ;
     `, [transferId, toUserId]);
 
-    if (!checkInfo.rows[0].validTransferId) {
-      client.release();
-      return res.status(409).end('Error invalid transfer Id');
-    }
-    if (!checkInfo.rows[0].validUserId) {
-      client.release();
-      return res.status(409).end('Error invalid User Id');
-    }
-    if (!checkInfo.rows[0].validUserId) {
-      client.release();
-      return res.status(409).end('Error can not transfer yourself');
-    }
+    if (!checkInfo.rows[0].validTransferId) return res.status(409).end('Error invalid transfer Id');
+    if (!checkInfo.rows[0].validUserId) return res.status(409).end('Error invalid User Id');
+    if (!checkInfo.rows[0].validUserId) return res.status(409).end('Error can not transfer yourself');
 
     const result = await client.query(`
       WITH t as (
@@ -186,7 +178,6 @@ async function TransferApply (req, res) {
               t.transfer_time as "transferTime" 
         FROM t;
     `, [transferId, toUserId]);
-    client.release();
 
     const { rows, rowCount } = result;
     return res.status(200).json({
@@ -195,23 +186,23 @@ async function TransferApply (req, res) {
   } catch (err) {
     console.error('TransferApply', err);
     res.status(500).send('Error ' + err);
+  } finally {
+    client.release();
   }
 }
 async function TransferApproval (req, res) {
+  const id = Number(req.body.transferId);
+  const allowance = req.body.allowance;
+  if (isNaN(id) || typeof allowance !== 'boolean') 
+    return res.status(400).end('Error invalid parameter');
+  
+  const client = await pool.connect();
   try {
-    const id = Number(req.body.transferId);
-    const allowance = req.body.allowance;
-    if (isNaN(id) || typeof allowance !== 'boolean') 
-      return res.status(400).end('Error invalid parameter');
-
-    const client = await pool.connect();
     const transferInfo = await client.query(`
       SELECT EXISTS ( SELECT id FROM t_transfer_ticket WHERE id = $1 ) as "validId";
     `, [id]);
 
-    if (!transferInfo.rows[0].validId) {
-      return res.status(404).end('Error invalid transfer id')
-    }
+    if (!transferInfo.rows[0].validId) return res.status(404).end('Error invalid transfer id');
 
     const query = allowance ? 
     `
@@ -265,22 +256,23 @@ async function TransferApproval (req, res) {
     `;
 
     const result = await client.query(query, [id, allowance]);
-    client.release();
-
     const { rows, rowCount } = result;
+
     return res.status(200).json({
       rows, rowCount
     });
   } catch (err) {
     console.error('TransferApproval', err);
     res.status(500).send('Error ' + err);
+  } finally {
+    client.release();
   }
 }
 async function TransferReceive (req, res) {
+  const client = await pool.connect();
   try {
     // TODO: check receiver
     const id = req.body.id;
-    const client = await pool.connect();
     const result = await client.query(`
       WITH transfer as (
         UPDATE t_ticket
@@ -298,6 +290,8 @@ async function TransferReceive (req, res) {
   } catch (err) {
     console.error('TransferApproval', err);
     res.status(500).send('Error ' + err);
+  } finally {
+    client.release();
   }
 }
 
