@@ -550,6 +550,10 @@ describe('API TEST', () => {
           transferId: 0,
           toUserId: 0
         };
+        const parameterInvalidToUserIdSameAsFrom = {
+          transferId: transferInfo.transferId,
+          toUserId: transferInfo.fromUserId
+        };
         function putRequestCheck(callback, parameter) {
           request(app)
             .put(url)
@@ -565,6 +569,9 @@ describe('API TEST', () => {
           },  
           function(callback) {
             putRequestCheck(callback, parameterInvalidUserIdAndTransferId);
+          },  
+          function(callback) {
+            putRequestCheck(callback, parameterInvalidToUserIdSameAsFrom);
           },  
         ], done);
       });

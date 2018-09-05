@@ -146,16 +146,14 @@ async function TransferApply (req, res) {
         EXISTS ( 
           SELECT id from t_user WHERE id = $2
         ) as "validUserId",
-        CASE WHEN (SELECT to_user_id FROM ttt) = $2 THEN false
-             ELSE true
-        END as "validToUserId",
-        ( SELECT id FROM ttt ) as "validTransferId"
+        ( SELECT id FROM ttt ) as "transferId",
+        ( SELECT from_user_id FROM ttt ) as "fromUserId"
         ;
     `, [transferId, toUserId]);
 
-    if (!checkInfo.rows[0].validTransferId) return res.status(409).end('Error invalid transfer Id');
+    if (!checkInfo.rows[0].transferId) return res.status(409).end('Error invalid transfer Id');
     if (!checkInfo.rows[0].validUserId) return res.status(409).end('Error invalid User Id');
-    if (!checkInfo.rows[0].validUserId) return res.status(409).end('Error can not transfer yourself');
+    if (checkInfo.rows[0].fromUserId === toUserId) return res.status(409).end('Error can not transfer yourself');
 
     const result = await client.query(`
       WITH t as (
